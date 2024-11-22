@@ -1,0 +1,81 @@
+import java.io.*;
+import java.util.*;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        // Créer un BufferedReader une seule fois
+        BufferedReader donnee = new BufferedReader(new FileReader("./src/donnees.csv"));
+
+        // Lire toutes les lignes du fichier et les stocker dans un tableau
+        String[] donneesLues = lireDonnees(donnee);
+
+        // Extraire les valeurs X et Y
+        int[] ValeursdeX = getX(donneesLues);
+        int[] ValeursdeY = getY(donneesLues);
+
+        // Calculer la moyenne des X
+        double moyenneX = getMoyennedeX(ValeursdeX);
+
+        // Afficher la moyenne des X
+        System.out.println("Moyenne des X : " + moyenneX);
+    }
+
+    // Lire toutes les lignes du fichier et les stocker dans un tableau
+    public static String[] lireDonnees(BufferedReader donnee) throws IOException {
+        // Compter le nombre de lignes dans le fichier
+        int nbrLignes = 0;
+        String ligne;
+        while ((ligne = donnee.readLine()) != null) {
+            nbrLignes++;
+        }
+
+        // Remettre le BufferedReader au début du fichier
+        donnee.close();
+        donnee = new BufferedReader(new FileReader("./src/donnees.csv"));
+
+        // Créer un tableau pour stocker les lignes lues
+        String[] donneesLues = new String[nbrLignes];
+        int index = 0;
+
+        // Lire les lignes et les stocker dans le tableau
+        while ((ligne = donnee.readLine()) != null) {
+            donneesLues[index] = ligne;
+            index++;
+        }
+
+        return donneesLues;
+    }
+
+    // Extraire les valeurs X à partir des données lues
+    public static int[] getX(String[] donneesLues) {
+        int[] ValeursDeX = new int[donneesLues.length];
+        for (int i = 0; i < donneesLues.length; i++) {
+            String[] valeurs = donneesLues[i].split(";");
+            ValeursDeX[i] = Integer.parseInt(valeurs[0]);
+        }
+        return ValeursDeX;
+    }
+
+    // Extraire les valeurs Y à partir des données lues
+    public static int[] getY(String[] donneesLues) {
+        int[] ValeursDeY = new int[donneesLues.length];
+        for (int i = 0; i < donneesLues.length; i++) {
+            String[] valeurs = donneesLues[i].split(";");
+            ValeursDeY[i] = Integer.parseInt(valeurs[1]);
+        }
+        return ValeursDeY;
+    }
+
+    // Calculer la moyenne des valeurs X
+    public static double getMoyennedeX(int[] ValeursdeX) {
+        int somme = 0;
+        for (int valeur : ValeursdeX) {
+            somme += valeur;
+        }
+        return (double) somme / ValeursdeX.length;
+    }
+}
