@@ -1,0 +1,249 @@
+import java.io.*;
+import java.util.*;
+
+public class TP22 {
+    public static void main(String[] args) throws IOException {
+        String fichierResultats = "resultats.txt";
+        PrintWriter writer = new PrintWriter(new FileWriter(fichierResultats));
+        // Déclarer le chemin vers le fichier CSV
+        String fichier = "./src/donnees.csv";
+        // Calculer le nombre de lignes dans le fichier
+        int nombreLignes = compteNombreLignes(fichier);
+        //scanner
+        Scanner scanner = new Scanner(System.in);
+        String medianePhrase = "La mediane est : ";
+        String moyennePhrase = " La moyenne est : ";
+        System.out.println("****************** Menu *************************");
+        System.out.println("1. Utiliser les données du fichier");
+        System.out.println("2. Utiliser les données intégrées");
+        System.out.println("3. Quitter");
+        System.out.print("Votre choix : ");
+        int choix = scanner.nextInt();
+        //declaration des tableaux
+        int[] ValeursdeX = null;
+        int[] ValeursdeY = null;
+
+        switch (choix) {
+            case 1: // Utiliser les données du fichier
+                ValeursdeX = new int[nombreLignes];
+                ValeursdeY = new int[nombreLignes];
+                getDonnee(fichier, ValeursdeX, ValeursdeY);
+                break;
+
+            case 2: // Utiliser les données intégrées
+                final String[] tabDonnees = {
+                        "780;8",
+                        "625;6",
+                        "450;3",
+                        "557;4",
+                        "671;7",
+                        "457;3",
+                        "456;3",
+                        "480;4",
+                        "685;6"
+                };
+                ValeursdeX = new int[tabDonnees.length];
+                ValeursdeY = new int[tabDonnees.length];
+                lireDonneesIntegrees(tabDonnees, ValeursdeX, ValeursdeY);
+
+
+                break;
+
+            case 3: // Quitter
+                System.out.println("Programme terminé.");
+                return;
+        }
+
+// option 1
+        // La moyenne de x
+        double moyenneX = getMoyenne(ValeursdeX);
+        System.out.println("Moyenne des X : " + moyenneX);
+        writer.println("La moyenne des X est : " + moyenneX);
+        // La mediane de x
+        double medianeX = getMediane(ValeursdeX);
+        writer.println("La mediane des X est : " + medianeX);
+        //L'ecart-type
+        double ecartTypeX = getEcarType(ValeursdeX);
+        writer.println("L'ecart-type des X est : " + ecartTypeX);
+
+
+//  option 2 (y)
+        //La valeur modale de y
+        System.out.println("La valeur modale de Y est : " + getValeurModale(ValeursdeY));
+        writer.println("La valeur modale de Y est : " + getValeurModale(ValeursdeY));
+// option 4
+        int xi =0;
+        double yi=0;
+        System.out.println("Entrez un x voulu : ");
+        xi = scanner.nextInt();
+        double[] parametre = regressionLineaire(ValeursdeX, ValeursdeY);
+        double B0tab= parametre[0];
+        double B1tab= parametre[1];
+        yi = B0tab +B1tab*xi;
+        writer.println("Les parametre sont : B0= "+ B0tab+ " et B1" + "= "+B1tab);
+
+// option 5
+        writer.println("Le coefficient de correlation : "+ calculerCoefficientCorrelation(ValeursdeX, ValeursdeY));
+        writer.close();
+    }
+
+    // Compte et retourne le nombre de lignes dans un fichier
+    public static int compteNombreLignes(String fichier) throws IOException {
+        int nombreLignes = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(fichier))) {
+            while (reader.readLine() != null) {
+                nombreLignes++;
+            }
+        } catch (IOException e) {
+            System.out.println("Erreur lors du comptage des lignes : " + e.getMessage());
+        }
+        return nombreLignes;
+    }
+
+    // Lire toutes les lignes du fichier et les stocker dans deux tableaux
+    public static void getDonnee(String nomFichier, int[] x, int[] y) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(nomFichier))) {
+            String ligne;
+            int index = 0;
+            while ((ligne = br.readLine()) != null) {
+                String[] valeurs = ligne.split(";");
+                x[index] = Integer.parseInt(valeurs[0].trim());
+                y[index] = Integer.parseInt(valeurs[1].trim());
+                index++;
+            }
+        } catch (IOException e) {
+            System.out.println("Erreur lors de la lecture du fichier : " + e.getMessage());
+        }
+    }
+
+    public static void lireDonneesIntegrees(String[] tabDonnees, int[] x, int[] y) {
+        for (int i = 0; i < tabDonnees.length; i++) {
+            String[] valeurs = tabDonnees[i].split(";");
+            x[i] = Integer.parseInt(valeurs[0]);
+            y[i] = Integer.parseInt(valeurs[1]);
+        }
+    }
+
+    // option 1
+    // Moyenne des X
+    public static double getMoyenne(int[] ValeursdeXouY) {
+        double somme = 0;
+        for (int valeur : ValeursdeXouY) {
+            somme += valeur;
+        }
+        return somme / ValeursdeXouY.length;
+    }
+
+    //Mediane des X
+    public static double getMediane(int[] ValeursdeXouY) {
+        //tri de bulles
+        for (int i = 0; i < ValeursdeXouY.length - 1; i++) {
+            // On effectue des échanges sur les éléments adjacents
+            for (int j = 0; j < ValeursdeXouY.length - 1 - i; j++) {
+                if (ValeursdeXouY[j] > ValeursdeXouY[j + 1]) {
+                    // Échange des éléments si nécessaire
+                    int temp = ValeursdeXouY[j];
+                    ValeursdeXouY[j] = ValeursdeXouY[j + 1];
+                    ValeursdeXouY[j + 1] = temp;
+                }
+            }
+        }
+        //la mediane
+        double medianeX = 0;
+        int n = ValeursdeXouY.length;
+        if (ValeursdeXouY.length % 2 == 0) {
+            medianeX = ((ValeursdeXouY[n / 2]) + (ValeursdeXouY[n / 2 - 1])) / 2;
+        } else {
+            medianeX = ValeursdeXouY[n / 2];
+        }
+//        ecrireResultats(medianeX);
+        return medianeX;
+    }
+
+    //L'ecart-type des X
+    public static double getEcarType(int[] ValeursdeXouY) {
+        double ecartTypeX = 0;
+        double sommeCarresDiff = 0;
+        double moyenne = getMoyenne(ValeursdeXouY);  // Appel à la méthode qui calcule la moyenne
+
+        // Calcul de la somme des carrés des différences entre chaque valeur et la moyenne
+        for (int val : ValeursdeXouY) {
+            sommeCarresDiff += Math.pow(val - moyenne, 2);
+        }
+
+        // Calcul de la variance (moyenne des carrés des différences pour un échantillon)
+        double variance = sommeCarresDiff / (ValeursdeXouY.length - 1);  // Diviser par (n - 1) pour l'échantillon
+
+        // L'écart-type est la racine carrée de la variance
+        return Math.sqrt(variance);
+    }
+
+    //Valeur modale des Y
+    public static int getValeurModale(int[] ValeursdeY) {
+        int[] frequences = new int[ValeursdeY.length];
+        boolean[] dejaCompte = new boolean[ValeursdeY.length];
+        int valeurModale = 0;
+        int frequenceModale = 0;
+
+        for (int i = 0; i < ValeursdeY.length; i++) {
+            if (!dejaCompte[i]) {
+                frequences[i] = 1;
+                for (int j = i + 1; j < ValeursdeY.length; j++) {
+                    if (ValeursdeY[j] == ValeursdeY[i]) {
+                        frequences[i]++;
+                        dejaCompte[j] = true;
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < ValeursdeY.length; i++) {
+            if (!dejaCompte[i] && frequences[i] > frequenceModale) {
+                valeurModale = ValeursdeY[i];
+                frequenceModale = frequences[i];
+            }
+        }
+        return valeurModale;
+    }
+
+    //Regression Lineaire
+    public static double[] regressionLineaire(int[] ValeursdeX, int[] ValeursdeY) throws IOException {
+        double sxx = 0;
+        double sxy = 0;
+        double B1 = 0;
+        double B0 = 0;
+        //sxx
+        for (int i = 0; i < ValeursdeX.length; i++) {
+            sxx += Math.pow(ValeursdeX[i] - getMoyenne(ValeursdeX), 2);
+        }
+        //sxy
+        for (int i = 0; i < ValeursdeY.length; i++) {
+            sxy += (ValeursdeX[i] - getMoyenne(ValeursdeX)) * (ValeursdeY[i] - getMoyenne(ValeursdeY));
+        }
+        B1 = sxy / sxx;
+        B0 = getMoyenne(ValeursdeY) - (B1 * getMoyenne(ValeursdeX));
+
+        return new double[]{B0, B1};
+    }
+    //coefficient de correlation
+    public static double calculerCoefficientCorrelation (int[] ValeursdeX, int[] ValeursdeY) {
+        double sxx = 0;
+        double sxy = 0;
+        double syy = 0;
+        double R =0;
+        //sxx
+        for (int i = 0; i < ValeursdeX.length; i++) {
+            sxx += Math.pow(ValeursdeX[i] - getMoyenne(ValeursdeX), 2);
+        }
+        //sxy
+        for (int i = 0; i < ValeursdeY.length; i++) {
+            sxy += (ValeursdeX[i] - getMoyenne(ValeursdeX)) * (ValeursdeY[i] - getMoyenne(ValeursdeY));
+        }
+        for (int i = 0; i < ValeursdeX.length; i++) {
+            syy+= Math.pow(ValeursdeY[i] - getMoyenne(ValeursdeY), 2);
+        }
+        R = sxy/Math.sqrt((syy*sxx));
+    return sxy/Math.sqrt((syy*sxx));}
+
+
+
+}
